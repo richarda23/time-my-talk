@@ -42,18 +42,19 @@ brew install portaudio
 git clone <repository-url>
 cd time-my-talk
 
-# 3. Create virtual environment with Python 3.10+
-python3.11 -m venv .venv
-source .venv/bin/activate
+# 3. Install with uv (recommended)
+uv sync
 
-# 4. Upgrade pip and install the package
-pip install --upgrade pip
-pip install -e .
+# Or use pip with venv
+# python3.11 -m venv .venv
+# source .venv/bin/activate
+# pip install --upgrade pip
+# pip install -e .
 
 # First run will automatically download the Vosk model (~40MB)
 ```
 
-**Note for Apple Silicon (M1/M2/M3)**: Vosk 0.3.44 is the latest version with ARM support. The installation above has been tested on macOS ARM.
+**Note for Apple Silicon (M1/M2/M3)**: Vosk 0.3.44 is pinned as the latest version with ARM support. The installation has been tested on macOS ARM and works with both `uv` and `pip`.
 
 ### Linux
 
@@ -66,12 +67,10 @@ sudo dnf install portaudio-devel      # Fedora/RHEL
 # 2. Clone and setup
 git clone <repository-url>
 cd time-my-talk
-python3 -m venv .venv
-source .venv/bin/activate
 
-# 3. Install package
-pip install --upgrade pip
-pip install -e .
+# 3. Install with uv (recommended) or pip
+uv sync
+# Or: python3 -m venv .venv && source .venv/bin/activate && pip install -e .
 ```
 
 ### Windows
@@ -81,11 +80,9 @@ pip install -e .
 git clone <repository-url>
 cd time-my-talk
 
-# 2. Create virtual environment and install
-python -m venv .venv
-.venv\Scripts\activate
-pip install --upgrade pip
-pip install -e .
+# 2. Install with uv (recommended) or pip
+uv sync
+# Or: python -m venv .venv && .venv\Scripts\activate && pip install -e .
 ```
 
 ### Troubleshooting
@@ -103,14 +100,12 @@ pip install -e .
 ## Usage
 
 ```bash
-# Activate virtual environment
+# With uv (recommended)
+uv run python -m time_my_talk.cli.main examples/sample_script.txt --duration 5
+
+# Or with activated venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Basic usage
 python -m time_my_talk.cli.main path/to/script.txt --duration 10
-
-# Example with sample script
-python -m time_my_talk.cli.main examples/sample_script.txt --duration 5
 ```
 
 ### Command Options
@@ -419,5 +414,5 @@ MIT License - feel free to use this project for personal or commercial purposes.
 
 Ready to practice your next talk? Start with:
 ```bash
-python -m time_my_talk.cli.main examples/sample_script.txt --duration 5
+uv run python -m time_my_talk.cli.main examples/sample_script.txt --duration 5
 ```
