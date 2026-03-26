@@ -10,14 +10,18 @@ from .types import Word
 class Script:
     """Loads and manages a presentation script."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, split_compounds: bool = True):
         """Load script from file.
 
         Args:
             file_path: Path to the script text file
+            split_compounds: Whether to split compound/CamelCase words for better speech recognition matching
         """
         self.file_path = Path(file_path)
+        self.split_compounds = split_compounds
         self.original_text = self._load_file()
+        if self.split_compounds:
+            self.original_text = self._preprocess_compounds(self.original_text)
         self.words = self._tokenize()
 
     def _load_file(self) -> str:
@@ -26,6 +30,44 @@ class Script:
             raise FileNotFoundError(f"Script file not found: {self.file_path}")
 
         return self.file_path.read_text(encoding="utf-8")
+
+    @staticmethod
+    def _preprocess_compounds(text: str) -> str:
+        """Preprocess text to split compound and CamelCase words.
+
+        This helps speech recognition match better since spoken phrases like
+        "NHS England" will be transcribed as separate words but might be
+        written as "NHSEngland" in the script.
+
+        Args:
+            text: Original text
+
+        Returns:
+            Text with compound words split
+        """
+        # Split on transitions from lowercase to uppercase (camelCase)
+        # But preserve sequences of all caps (NHS, WCAG) as single units initially
+        # Then split long sequences of caps if followed by lowercase
+
+        # Insert space between lowercase and uppercase: devOps -> dev Ops
+        text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
+
+        # Insert space between sequence of caps and a following lowercase: HTMLParser -> HTML Parser
+        text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
+
+        # Split acronyms that are likely spoken letter by letter (3+ caps in a row at word boundary)
+        # WCAG -> W C A G, but preserve if part of a longer word
+        def split_acronym(match):
+            acronym = match.group(1)
+            if len(acronym) >= 3:
+                # Split into individual letters with spaces
+                return " ".join(acronym)
+            return acronym
+
+        # Match 3+ capital letters as a standalone "word" (with word boundaries)
+        text = re.sub(r"\b([A-Z]{3,})\b", split_acronym, text)
+
+        return text
 
     def _tokenize(self) -> List[Word]:
         """Tokenize the script into words.
