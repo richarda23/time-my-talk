@@ -19,25 +19,67 @@ A presentation timing tool that uses local speech recognition to help you practi
 
 ## Installation
 
+### macOS
+
+```bash
+# Install PortAudio (required for PyAudio)
+brew install portaudio
+
+# Clone the repository
+git clone <repository-url>
+cd time-my-talk
+
+# Create virtual environment and install dependencies
+python3 -m venv .venv
+source .venv/bin/activate
+pip install vosk pyaudio rich click
+
+# Or use uv (requires setting up PortAudio first)
+# uv sync
+
+# First run will download the Vosk speech recognition model (~40MB)
+```
+
+### Linux
+
+```bash
+# Install PortAudio
+sudo apt-get install portaudio19-dev  # Debian/Ubuntu
+# or
+sudo dnf install portaudio-devel      # Fedora/RHEL
+
+# Clone and install
+git clone <repository-url>
+cd time-my-talk
+python3 -m venv .venv
+source .venv/bin/activate
+pip install vosk pyaudio rich click
+```
+
+### Windows
+
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd time-my-talk
 
-# Install dependencies with uv
-uv sync
-
-# First run will download the Vosk speech recognition model (~40MB)
+# Create virtual environment and install
+python -m venv .venv
+.venv\Scripts\activate
+pip install vosk pyaudio rich click
 ```
 
 ## Usage
 
 ```bash
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
 # Basic usage
-uv run time-my-talk path/to/script.txt --duration 10
+python -m time_my_talk.cli.main path/to/script.txt --duration 10
 
 # Example with sample script
-uv run time-my-talk examples/sample_script.txt --duration 5
+python -m time_my_talk.cli.main examples/sample_script.txt --duration 5
 ```
 
 ### Command Options

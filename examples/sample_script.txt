@@ -1,0 +1,15 @@
+Welcome everyone to today's presentation on the future of cloud computing.
+
+Over the next ten minutes, I'll share insights about three key trends that are reshaping how we build and deploy applications.
+
+First, let's talk about serverless architectures. Serverless computing allows developers to focus entirely on code without managing infrastructure. You simply write your function, deploy it, and the cloud provider handles scaling, availability, and maintenance. This shift has dramatically reduced operational complexity for many organizations.
+
+The second major trend is edge computing. As applications become more distributed and users demand lower latency, we're moving computation closer to where data is generated. Edge computing enables real-time processing for IoT devices, mobile applications, and content delivery. This is particularly important for applications like autonomous vehicles and augmented reality, where milliseconds matter.
+
+Finally, we're seeing the rise of multi-cloud strategies. Rather than committing to a single cloud provider, companies are distributing workloads across multiple platforms. This approach reduces vendor lock-in, improves resilience, and allows organizations to leverage the best services from each provider.
+
+These three trends - serverless, edge computing, and multi-cloud - are not just buzzwords. They represent fundamental shifts in how we architect modern applications.
+
+In the coming months, I encourage you to explore these technologies in your own projects. Start small with a serverless function or experiment with edge deployment. The tools and platforms are more accessible than ever before.
+
+Thank you for your attention. I'm happy to take questions now.
