@@ -1,7 +1,7 @@
 """Progress tracking through the script."""
 
 import re
-from typing import List
+from typing import List, Optional
 
 from .script import Script
 from .types import ProgressStatus
@@ -10,18 +10,29 @@ from .types import ProgressStatus
 class ProgressTracker:
     """Tracks progress through a script by matching recognized speech."""
 
-    def __init__(self, script: Script, skip_tolerance: int = 3):
+    def __init__(
+        self,
+        script: Script,
+        skip_tolerance: int = 3,
+        look_ahead_window: int = 100,
+        sequence_match_length: int = 3,
+    ):
         """Initialize progress tracker.
 
         Args:
             script: The Script object to track progress through
             skip_tolerance: Number of unmatched words to tolerate before considering a skip
+            look_ahead_window: How many words ahead to search when detecting a skip
+            sequence_match_length: Number of consecutive words that must match to confirm a skip location
         """
         self.script = script
         self.skip_tolerance = skip_tolerance
+        self.look_ahead_window = look_ahead_window
+        self.sequence_match_length = sequence_match_length
         self.current_index = 0
         self.last_matched_text = ""
         self._unmatched_count = 0
+        self._recent_unmatched_words: List[str] = []
 
     def update(self, transcribed_text: str) -> ProgressStatus:
         """Update progress based on newly transcribed text.
@@ -83,6 +94,7 @@ class ProgressTracker:
         if self.script.words[self.current_index].normalized == word:
             self.current_index += 1
             self._unmatched_count = 0
+            self._recent_unmatched_words.clear()
             return True
 
         # Try looking ahead within tolerance (for filler words/mistakes)
@@ -93,18 +105,74 @@ class ProgressTracker:
                     # Found a match ahead - advance to it
                     self.current_index = check_index + 1
                     self._unmatched_count = 0
+                    self._recent_unmatched_words.clear()
                     return True
 
-        # No match found
+        # No match found - collect this word for potential skip detection
         self._unmatched_count += 1
+        self._recent_unmatched_words.append(word)
 
-        # If too many unmatched, maybe we skipped a section
-        # For now, just continue without advancing
+        # Keep buffer size reasonable
+        if len(self._recent_unmatched_words) > self.sequence_match_length * 2:
+            self._recent_unmatched_words.pop(0)
+
+        # If too many unmatched, search ahead for where we might have jumped to
         if self._unmatched_count > self.skip_tolerance:
-            # Could implement more sophisticated recovery here
-            self._unmatched_count = 0
+            new_position = self._search_ahead_for_match()
+            if new_position is not None:
+                # Found a match! Jump to the new position
+                self.current_index = new_position
+                self._unmatched_count = 0
+                self._recent_unmatched_words.clear()
+                return True
+            else:
+                # No match found, reset counter and keep trying
+                self._unmatched_count = 0
+                self._recent_unmatched_words.clear()
 
         return False
+
+    def _search_ahead_for_match(self) -> Optional[int]:
+        """Search ahead in the script for a matching sequence of words.
+
+        When the speaker skips a section, this method looks ahead to find where
+        they likely jumped to by matching recent unmatched words.
+
+        Returns:
+            The script index where a match was found, or None if no match
+        """
+        if len(self._recent_unmatched_words) < self.sequence_match_length:
+            return None
+
+        # Get the most recent words to search for
+        search_sequence = self._recent_unmatched_words[-self.sequence_match_length :]
+
+        # Search within the look-ahead window
+        search_end = min(
+            len(self.script.words), self.current_index + self.look_ahead_window
+        )
+
+        # Start searching a bit ahead of current position to avoid false positives
+        search_start = self.current_index + self.skip_tolerance + 1
+
+        for start_idx in range(search_start, search_end):
+            # Check if we have enough words left to match the sequence
+            if start_idx + self.sequence_match_length > len(self.script.words):
+                break
+
+            # Try to match the sequence at this position
+            match_count = 0
+            for i, search_word in enumerate(search_sequence):
+                script_word = self.script.words[start_idx + i].normalized
+                if script_word == search_word:
+                    match_count += 1
+
+            # If all words in the sequence match, we found the skip location
+            if match_count == self.sequence_match_length:
+                # Return the position after the matched sequence
+                return start_idx + self.sequence_match_length
+
+        return None
 
     def get_status(self) -> ProgressStatus:
         """Get current progress status.
@@ -130,3 +198,4 @@ class ProgressTracker:
         self.current_index = 0
         self.last_matched_text = ""
         self._unmatched_count = 0
+        self._recent_unmatched_words.clear()
