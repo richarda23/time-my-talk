@@ -116,24 +116,36 @@ class SpeechRecognizer:
 
     def recognize_stream(
         self, audio_input: AudioInput
-    ) -> Generator[str, None, None]:
+    ) -> Generator[tuple[str, bool], None, None]:
         """Recognize speech from audio stream.
 
         Args:
             audio_input: AudioInput instance providing audio chunks
 
         Yields:
-            Recognized text from speech (only final results, not partial)
+            Tuple of (recognized_text, is_final) on EVERY audio chunk
+            - is_final=True: Complete phrase, use for progress tracking
+            - is_final=False: Partial result or empty (keeps display updating)
         """
         if self.recognizer is None:
             raise RuntimeError("Recognizer not initialized. Call initialize() first.")
 
         for chunk in audio_input.read_chunks():
             if self.recognizer.AcceptWaveform(chunk):
-                # Final result for this chunk
+                # Final result - use this for tracking
                 result = json.loads(self.recognizer.Result())
-                if result.get("text"):
-                    yield result["text"]
+                text = result.get("text", "")
+                if text:
+                    yield (text, True)
+                else:
+                    # Chunk processed but no final text - yield empty to keep loop alive
+                    yield ("", False)
+            else:
+                # Partial result or silence - always yield to prevent hanging
+                partial = json.loads(self.recognizer.PartialResult())
+                text = partial.get("partial", "")
+                # Yield even if empty - this keeps the display updating
+                yield (text, False)
 
     def get_final_result(self) -> str:
         """Get any remaining final result.

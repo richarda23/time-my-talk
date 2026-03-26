@@ -171,28 +171,42 @@ class TalkTimer:
         self.start_time = time.time()
         self.audio.start()
 
+        last_update = time.time()
+        update_interval = 0.5  # Update display every 500ms minimum
+
         try:
             with Live(
                 self.create_display(0),
                 console=self.console,
-                refresh_per_second=2,
+                refresh_per_second=4,  # Increased from 2 for smoother updates
             ) as live:
                 # Start recognition loop
-                for recognized_text in self.recognizer.recognize_stream(self.audio):
-                    # Update tracker with recognized text
-                    self.tracker.update(recognized_text)
+                for recognized_text, is_final in self.recognizer.recognize_stream(
+                    self.audio
+                ):
+                    # Only update tracker with final results that have text
+                    if is_final and recognized_text:
+                        self.tracker.update(recognized_text)
 
-                    # Update display
-                    elapsed = time.time() - self.start_time
-                    live.update(self.create_display(elapsed))
+                    # Update display regularly (on every chunk to prevent hanging)
+                    current_time = time.time()
+                    if current_time - last_update >= update_interval:
+                        elapsed = current_time - self.start_time
+                        live.update(self.create_display(elapsed))
+                        last_update = current_time
 
-                    # Check if finished
-                    progress = self.tracker.get_status()
-                    if progress.percentage >= 99.0:
-                        break
+                        # Check if finished (only check periodically, not on every chunk)
+                        progress = self.tracker.get_status()
+                        if progress.percentage >= 99.0:
+                            break
 
         except KeyboardInterrupt:
             self.console.print("\n\n[yellow]Stopped by user[/yellow]")
+        except RuntimeError as e:
+            self.console.print(f"\n\n[red]Error: {e}[/red]")
+            self.console.print(
+                "[yellow]Check your microphone connection and permissions[/yellow]"
+            )
         finally:
             self.cleanup()
 

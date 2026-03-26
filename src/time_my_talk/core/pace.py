@@ -6,15 +6,24 @@ from .types import PaceStatus
 class PaceCalculator:
     """Calculates whether a speaker is on pace, ahead, or behind schedule."""
 
-    def __init__(self, target_duration_minutes: float, tolerance_seconds: float = 30.0):
+    def __init__(
+        self,
+        target_duration_minutes: float,
+        tolerance_percentage: float = 5.0,
+    ):
         """Initialize pace calculator.
 
         Args:
             target_duration_minutes: Target presentation duration in minutes
-            tolerance_seconds: Tolerance in seconds for "on pace" status (default 30)
+            tolerance_percentage: Tolerance as percentage of target duration (default 5%)
+                                 This means you'll see "behind" if likely to finish >5% late.
+                                 Examples: 3min talk = 9s, 5min = 15s, 10min = 30s, 20min = 60s
         """
         self.target_duration_seconds = target_duration_minutes * 60
-        self.tolerance_seconds = tolerance_seconds
+        self.tolerance_percentage = tolerance_percentage
+        self.tolerance_seconds = self.target_duration_seconds * (
+            tolerance_percentage / 100
+        )
 
     def calculate_pace(
         self, elapsed_seconds: float, actual_percentage: float
@@ -61,9 +70,12 @@ class PaceCalculator:
         )
 
     def update_target_duration(self, target_duration_minutes: float) -> None:
-        """Update target duration.
+        """Update target duration and recalculate tolerance.
 
         Args:
             target_duration_minutes: New target duration in minutes
         """
         self.target_duration_seconds = target_duration_minutes * 60
+        self.tolerance_seconds = self.target_duration_seconds * (
+            self.tolerance_percentage / 100
+        )

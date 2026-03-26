@@ -32,7 +32,7 @@ class PaceStatus:
     expected_percentage: float
     actual_percentage: float
     seconds_ahead: float  # Positive means ahead, negative means behind
-    is_on_pace: bool  # True if within tolerance (e.g., ±30 seconds)
+    is_on_pace: bool  # True if within tolerance (default: ±5% of target duration)
 
     @property
     def status_text(self) -> str:

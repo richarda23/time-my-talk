@@ -50,11 +50,27 @@ class AudioInput:
 
         while True:
             try:
+                # Check if stream is still active
+                if not self.stream.is_active():
+                    print("Audio stream became inactive")
+                    break
+
+                # Read with timeout via non-blocking check
                 data = self.stream.read(self.chunk_size, exception_on_overflow=False)
+
+                if not data:
+                    print("No audio data received")
+                    break
+
                 yield data
+
+            except OSError as e:
+                # Audio device errors (unplugged, permission denied, etc.)
+                print(f"Audio device error: {e}")
+                raise RuntimeError(f"Audio device error: {e}") from e
             except Exception as e:
                 print(f"Error reading audio: {e}")
-                break
+                raise RuntimeError(f"Failed to read audio: {e}") from e
 
     def stop(self) -> None:
         """Stop capturing audio and cleanup resources."""
