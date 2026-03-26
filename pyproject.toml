@@ -17,6 +17,11 @@ dependencies = [
 [project.scripts]
 time-my-talk = "time_my_talk.cli.main:main"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
