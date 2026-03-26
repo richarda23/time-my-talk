@@ -28,7 +28,7 @@ env/
 
 # uv
 .venv/
-uv.lock
+# uv.lock is committed for reproducibility
 
 # IDE
 .vscode/

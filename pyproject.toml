@@ -8,7 +8,7 @@ authors = [
     { name = "Richard Adams" }
 ]
 dependencies = [
-    "vosk>=0.3.38",
+    "vosk==0.3.44",  # Pinned: 0.3.44 is latest with macOS ARM support
     "pyaudio>=0.2.14",
     "rich>=13.7.0",
     "click>=8.1.7",
